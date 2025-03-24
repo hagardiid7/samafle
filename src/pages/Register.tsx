@@ -13,8 +13,15 @@ export function Register() {
   const navigate = useNavigate();
 
   const validateEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    return emailRegex.test(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return false;
+    }
+    // Additional checks for common invalid patterns
+    if (email.includes(' ')) return false;
+    if (email.startsWith('.') || email.endsWith('.')) return false;
+    if (email.split('@')[0].length < 1) return false;
+    return true;
   };
 
   const validatePassword = (password: string) => {
@@ -27,7 +34,7 @@ export function Register() {
 
     // Validate email
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError('Please enter a valid email address (e.g., user@example.com)');
       return;
     }
 
@@ -71,11 +78,17 @@ export function Register() {
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : 'An error occurred during registration. Please try again.'
-      );
+      let errorMessage = 'An error occurred during registration. Please try again.';
+      if (err instanceof Error) {
+        if (err.message.includes('email')) {
+          errorMessage = 'Invalid email address. Please use a valid email format (e.g., user@example.com)';
+        } else if (err.message.includes('password')) {
+          errorMessage = 'Password must be at least 6 characters';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
